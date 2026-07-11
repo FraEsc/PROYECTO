@@ -1,0 +1,53 @@
+spring:
+  application:
+    name: gym-gateway-api
+
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          routes:
+            - id: socios-route
+              uri: http://localhost:8081
+              predicates:
+                - Path=/api/v1/socios/**
+              filters:
+                - AddRequestHeader=X-Gateway, GymFit-Gateway
+
+            - id: planes-route
+              uri: http://localhost:8081
+              predicates:
+                - Path=/api/v1/planes/**
+              filters:
+                - AddRequestHeader=X-Gateway, GymFit-Gateway
+
+            - id: membresias-route
+              uri: http://localhost:8081
+              predicates:
+                - Path=/api/v1/membresias/**
+              filters:
+                - AddRequestHeader=X-Gateway, GymFit-Gateway
+
+            - id: entrenadores-route
+              uri: http://localhost:8082
+              predicates:
+                - Path=/api/v1/entrenadores/**
+              filters:
+                - AddRequestHeader=X-Gateway, GymFit-Gateway
+
+            - id: clases-route
+              uri: http://localhost:8082
+              predicates:
+                - Path=/api/v1/clases/**
+              filters:
+                - AddRequestHeader=X-Gateway, GymFit-Gateway
+
+            - id: reservas-route
+              uri: http://localhost:8082
+              predicates:
+                - Path=/api/v1/reservas/**
+              filters:
+                - AddRequestHeader=X-Gateway, GymFit-Gateway
+
+server:
+  port: 8080

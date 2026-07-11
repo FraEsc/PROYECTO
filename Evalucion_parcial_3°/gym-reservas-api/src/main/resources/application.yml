@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: gym-reservas-api
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/db_gym_reservas
+    username: root
+    password: ""
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+  cloud:
+    openfeign:
+      client:
+        config:
+          gym-socios-api:
+            connectTimeout: 3000
+            readTimeout: 5000
+
+server:
+  port: 8082
+
+gym:
+  socios:
+    url: http://localhost:8081

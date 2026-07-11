@@ -36,6 +36,21 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    @ExceptionHandler(ServicioSociosNoDisponibleException.class)
+    public ResponseEntity<ApiResponse<Object>> manejarServicioSociosNoDisponible(
+            ServicioSociosNoDisponibleException ex
+    ) {
+        log.error("Servicio de socios no disponible: {}", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(new ApiResponse<>(
+                        HttpStatus.SERVICE_UNAVAILABLE.value(),
+                        ex.getMessage(),
+                        true,
+                        null
+                ));
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse<Object>> manejarRuntimeException(
             RuntimeException ex

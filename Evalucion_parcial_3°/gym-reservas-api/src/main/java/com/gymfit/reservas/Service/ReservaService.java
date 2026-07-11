@@ -13,7 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.gymfit.reservas.Exception.ServicioSociosNoDisponibleException;
+import feign.RetryableException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -116,7 +117,22 @@ public class ReservaService {
         }
 
 
-        ApiResponse<Boolean> respuestaMembresia = socioClient.verificarMembresiaActiva(request.getIdSocio());
+        ApiResponse<Boolean> respuestaMembresia;
+
+        try {
+            respuestaMembresia =
+                    socioClient.verificarMembresiaActiva(request.getIdSocio());
+
+        } catch (RetryableException ex) {
+            log.error(
+                    "No fue posible conectar con gym-socios-api: {}",
+                    ex.getMessage()
+            );
+
+            throw new ServicioSociosNoDisponibleException(
+                    "El servicio de socios no se encuentra disponible"
+            );
+        }
 
         if (respuestaMembresia == null || !Boolean.TRUE.equals(respuestaMembresia.getData())) {
             log.warn("Socio ID: {} no tiene membresía activa", request.getIdSocio());
@@ -185,14 +201,33 @@ public class ReservaService {
     public void eliminarReserva(Long idReserva) {
         log.info("Eliminando reserva con ID: {}", idReserva);
 
-        if (!reservaRepository.existsById(idReserva)) {
-            log.error("No se puede eliminar: reserva no existe, ID: {}", idReserva);
-            throw new RuntimeException("No se puede eliminar: reserva no existe");
+        Reserva reserva = reservaRepository.findById(idReserva)
+                .orElseThrow(() -> {
+                    log.error("Reserva no encontrada con ID: {}", idReserva);
+                    return new RuntimeException("Reserva no encontrada");
+                });
+
+        if ("CONFIRMADA".equals(reserva.getEstado())) {
+            ClaseGrupal clase = reserva.getClaseGrupal();
+
+            clase.setCuposDisponibles(
+                    clase.getCuposDisponibles() + 1
+            );
+
+            claseGrupalRepository.save(clase);
+
+            log.info(
+                    "Cupo devuelto a la clase ID: {}",
+                    clase.getIdClase()
+            );
         }
 
-        reservaRepository.deleteById(idReserva);
+        reservaRepository.delete(reserva);
 
-        log.info("Reserva eliminada correctamente con ID: {}", idReserva);
+        log.info(
+                "Reserva eliminada correctamente con ID: {}",
+                idReserva
+        );
     }
 
 

@@ -137,9 +137,31 @@ public class ClaseGrupalService {
             throw new RuntimeException("El cupo máximo debe ser mayor a cero");
         }
 
+        int cuposUtilizados =
+                claseExistente.getCupoMaximo()
+                        - claseExistente.getCuposDisponibles();
+
+        if (request.getCupoMaximo() < cuposUtilizados) {
+            log.warn(
+                    "No se puede reducir el cupo máximo a {} porque existen {} cupos utilizados",
+                    request.getCupoMaximo(),
+                    cuposUtilizados
+            );
+
+            throw new RuntimeException(
+                    "El cupo máximo no puede ser menor a las reservas existentes"
+            );
+        }
+
+        int nuevosCuposDisponibles =
+                request.getCupoMaximo() - cuposUtilizados;
+
         Entrenador entrenador = entrenadorRepository.findById(request.getIdEntrenador())
                 .orElseThrow(() -> {
-                    log.error("Entrenador no encontrado con ID: {}", request.getIdEntrenador());
+                    log.error(
+                            "Entrenador no encontrado con ID: {}",
+                            request.getIdEntrenador()
+                    );
                     return new RuntimeException("Entrenador no encontrado");
                 });
 
@@ -147,6 +169,7 @@ public class ClaseGrupalService {
         claseExistente.setDescripcion(request.getDescripcion());
         claseExistente.setFechaHora(request.getFechaHora());
         claseExistente.setCupoMaximo(request.getCupoMaximo());
+        claseExistente.setCuposDisponibles(nuevosCuposDisponibles);
         claseExistente.setEntrenador(entrenador);
 
 

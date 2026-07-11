@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -173,9 +173,27 @@ public class MembresiaService {
     public boolean verificarMembresiaActiva(Long idSocio) {
         log.info("Verificando membresía activa para socio ID: {}", idSocio);
 
-        boolean tieneActiva = membresiaRepository.existsBySocio_IdSocioAndEstado(idSocio, "ACTIVA");
+        if (!socioRepository.existsById(idSocio)) {
+            log.warn("Socio no encontrado con ID: {}", idSocio);
+            throw new RuntimeException("Socio no encontrado");
+        }
 
-        log.info("Socio ID: {} tiene membresía activa: {}", idSocio, tieneActiva);
+        LocalDate fechaActual = LocalDate.now();
+
+        boolean tieneActiva =
+                membresiaRepository
+                        .existsBySocio_IdSocioAndEstadoAndFechaInicioLessThanEqualAndFechaFinGreaterThanEqual(
+                                idSocio,
+                                "ACTIVA",
+                                fechaActual,
+                                fechaActual
+                        );
+
+        log.info(
+                "Socio ID: {} tiene membresía vigente: {}",
+                idSocio,
+                tieneActiva
+        );
 
         return tieneActiva;
     }
